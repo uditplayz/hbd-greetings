@@ -3,18 +3,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Birthday Yug!</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <title>Happy 20th Birthday Yug! 🎂</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 70vh;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            z-index: 10;
+        }
+
+        .header {
+            text-align: center;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            animation: bounce 2s infinite;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #ffed4e;
+            text-shadow: 3px 3px 0 #ff6b6b, 6px 6px 0 #4ecdc4;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ffffff;
+            text-shadow: 2px 2px 0 #ff6b6b;
+            letter-spacing: 1px;
+        }
+
+        .birthday-message {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #ffed4e;
+            text-shadow: 2px 2px 0 #ff6b6b, 4px 4px 0 #4ecdc4;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #ffffff;
+            text-shadow: 1px 1px 0 #ff6b6b;
+        }
+
+        .controls {
+            font-size: 0.6rem;
+            color: #ffffff;
+            text-shadow: 1px 1px 0 #ff6b6b;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        .particle {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 10px #ffed4e, 2px 2px 0 #ff6b6b, 4px 4px 0 #4ecdc4;
+            }
+            50% {
+                text-shadow: 0 0 20px #ffed4e, 0 0 30px #ff6b6b, 2px 2px 0 #4ecdc4;
+            }
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .particle.falling {
+            animation: fall 3s linear forwards;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.5rem;
+            }
+            .subtitle {
+                font-size: 0.8rem;
+            }
+            .birthday-message {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    
-    <div id="ui-container">
-        <h1 id="title">HAPPY 20TH BIRTHDAY YUG!</h1>
-        <p>Left Click to Spawn Diamonds | Right Click to Rotate</p>
-        <button id="music-btn">🎵 Play Music</button>
+    <div class="container">
+        <canvas id="canvas"></canvas>
+        <div class="overlay">
+            <div class="header">
+                <div class="title">🎉 HAPPY BIRTHDAY YUG! 🎉</div>
+                <div class="subtitle">YOU'RE NOW 20!</div>
+            </div>
+            <div class="birthday-message" style="margin-top: -100px;">
+                🎂 20 YEARS OF AWESOME 🎂
+            </div>
+            <div class="footer">
+                <div class="controls">CLICK & DRAG TO EXPLORE | SCROLL TO ZOOM</div>
+                <div style="margin-top: 20px;">WELCOME TO YOUR MINECRAFT WORLD!</div>
+            </div>
+        </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / (window.innerHeight * 0.7), 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight * 0.7);
+        renderer.setClearColor(0x87ceeb, 1);
+        document.getElementById('canvas').parentNode.insertBefore(renderer.domElement, document.getElementById('canvas'));
+        document.getElementById('canvas').style.display = 'none';
+
+        // Move canvas to the right place
+        const canvasContainer = document.querySelector('.container');
+        canvasContainer.insertBefore(renderer.domElement, canvasContainer.firstChild);
+
+        camera.position.set(10, 8, 10);
+        camera.lookAt(0, 0, 0);
+
+        // Lighting
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(20, 30, 20);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        scene.add(sunLight);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        // Minecraft block textures - using canvas to create pixel-perfect textures
+        function createBlockTexture(color1, color2, color3) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+
+            // Create a pixelated block texture
+            const colors = [color1, color2, color3];
+            for (let i = 0; i < 64; i += 8) {
+                for (let j = 0; j < 64; j += 8) {
+                    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                    ctx.fillRect(i, j, 8, 8);
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        // Create different block types
+        const dirtTexture = createBlockTexture('#8b7355', '#a0826d', '#7a6d5f');
+        const grassTexture = createBlockTexture('#228b22', '#2ea62e', '#1f7f1f');
+        const stoneTexture = createBlockTexture('#909090', '#a0a0a0', '#808080');
+        const dirtTopTexture = createBlockTexture('#228b22', '#2ea62e', '#1f7f1f');
+        const happyTexture = createBlockTexture('#ffed4e', '#ffd700', '#ffa500');
+
+        // Create blocks for the world
+        const blocks = [];
+
+        function createBlock(x, y, z, textureType = 'stone') {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            let material;
+
+            if (textureType === 'dirt') {
+                material = new THREE.MeshStandardMaterial({ map: dirtTexture });
+            } else if (textureType === 'grass') {
+                material = new THREE.MeshStandardMaterial({ map: grassTexture });
+            } else if (textureType === 'happy') {
+                material = new THREE.MeshStandardMaterial({ 
+                    map: happyTexture,
+                    emissive: 0xffed4e,
+                    emissiveIntensity: 0.3
+                });
+            } else {
+                material = new THREE.MeshStandardMaterial({ map: stoneTexture });
+            }
+
+            const block = new THREE.Mesh(geometry, material);
+            block.position.set(x, y, z);
+            block.castShadow = true;
+            block.receiveShadow = true;
+            block.userData = { x, y, z, type: textureType };
+            scene.add(block);
+            blocks.push(block);
+            return block;
+        }
+
+        // Create terrain
+        for (let x = -8; x < 8; x++) {
+            for (let z = -8; z < 8; z++) {
+                // Base stone layer
+                createBlock(x, -2, z, 'stone');
+                createBlock(x, -1, z, 'dirt');
+                createBlock(x, 0, z, 'grass');
+            }
+        }
+
+        // Create a "20" display with blocks
+        const positionsFor20 = [
+            // "2"
+            { x: -3, y: 2, z: 0 }, { x: -2, y: 2, z: 0 }, { x: -1, y: 2, z: 0 },
+            { x: -3, y: 1, z: 0 }, { x: -1, y: 1, z: 0 },
+            { x: -3, y: 0, z: 0 }, { x: -2, y: 0, z: 0 }, { x: -1, y: 0, z: 0 },
+            { x: -3, y: 3, z: 0 }, { x: -1, y: 3, z: 0 },
+            { x: -2, y: 4, z: 0 },
+            // "0"
+            { x: 1, y: 2, z: 0 }, { x: 2, y: 2, z: 0 }, { x: 3, y: 2, z: 0 },
+            { x: 1, y: 1, z: 0 }, { x: 3, y: 1, z: 0 },
+            { x: 1, y: 0, z: 0 }, { x: 2, y: 0, z: 0 }, { x: 3, y: 0, z: 0 },
+            { x: 1, y: 3, z: 0 }, { x: 2, y: 3, z: 0 }, { x: 3, y: 3, z: 0 },
+        ];
+
+        positionsFor20.forEach((pos, index) => {
+            const block = createBlock(pos.x, pos.y, pos.z, 'happy');
+            block.userData.isNumber = true;
+            block.userData.originalY = pos.y;
+            block.userData.floatSpeed = 0.02 + Math.random() * 0.01;
+            block.userData.floatOffset = index * 0.2;
+        });
+
+        // Add some decorative blocks
+        for (let i = 0; i < 5; i++) {
+            const x = Math.random() * 10 - 5;
+            const z = Math.random() * 10 - 5;
+            const height = Math.floor(Math.random() * 4) + 1;
+            for (let h = 0; h < height; h++) {
+                createBlock(x, h + 1, z, h === height - 1 ? 'grass' : 'dirt');
+            }
+        }
+
+        // Mouse controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        const cameraRotation = { x: 0, y: 0 };
+
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                cameraRotation.y += deltaX * 0.005;
+                cameraRotation.x += deltaY * 0.005;
+
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Zoom with scroll
+        document.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomSpeed = 0.5;
+            const direction = camera.position.clone().normalize();
+            camera.position.addScaledVector(direction, e.deltaY > 0 ? zoomSpeed : -zoomSpeed);
+        }, { passive: false });
+
+        // Particle confetti effect
+        function createConfetti() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.textContent = ['🎉', '🎂', '🎁', '⭐', '🎊'][Math.floor(Math.random() * 5)];
+            particle.style.left = Math.random() * window.innerWidth + 'px';
+            particle.style.top = '-50px';
+            document.body.appendChild(particle);
+
+            particle.classList.add('falling');
+            particle.addEventListener('animationend', () => particle.remove());
+        }
+
+        // Trigger confetti periodically
+        setInterval(() => {
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => createConfetti(), i * 100);
+            }
+        }, 3000);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update camera position based on mouse
+            const radius = 15;
+            camera.position.x = radius * Math.sin(cameraRotation.y) * Math.cos(cameraRotation.x);
+            camera.position.y = 8 + radius * Math.sin(cameraRotation.x);
+            camera.position.z = radius * Math.cos(cameraRotation.y) * Math.cos(cameraRotation.x);
+            camera.lookAt(0, 2, 0);
+
+            // Animate number blocks
+            blocks.forEach((block) => {
+                if (block.userData.isNumber) {
+                    const time = Date.now() * 0.001;
+                    block.position.y = block.userData.originalY + Math.sin(time * block.userData.floatSpeed + block.userData.floatOffset) * 0.5;
+                    block.rotation.x += 0.005;
+                    block.rotation.y += 0.01;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / (window.innerHeight * 0.7);
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight * 0.7);
+        });
+
+        animate();
+    </script>
 </body>
 </html>
